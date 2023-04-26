@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 
 const cors = require("cors");
 
+const ws = require("ws");
+
 const app = express();
 
 const cookieParser = require("cookie-parser");
@@ -101,4 +103,36 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.listen(5000);
+const server = app.listen(5000);
+
+const wss = new ws.WebSocketServer({ server });
+
+wss.on("connection", (connection, req) => {
+  const cookies = req.headers.cookie;
+  if (cookies) {
+    const tokenString = cookies
+      .split(";")
+      .find((str) => str.startsWith("token="));
+    if (tokenString) {
+      const token = tokenString.split("=")[1];
+      if (token) {
+        jwt.verify(token, jwtsec, {}, (err, data) => {
+          if (err) throw err;
+          const { userId, username } = data;
+          connection.userId = userId;
+          connection.username = username;
+        });
+      }
+    }
+  }
+  [...wss.clients].forEach((client) => {
+    client.send(
+      JSON.stringify({
+        online: [...wss.clients].map((c) => ({
+          userId: c.userId,
+          username: c.username,
+        })),
+      })
+    );
+  });
+});
