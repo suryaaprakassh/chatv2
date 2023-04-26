@@ -1,11 +1,13 @@
-import { useContext } from "react"
-import { userContext } from "./App"
+import { useContext } from "react";
+import { userContext } from "./App";
+import Chat from "./Chat";
+const Route = () => {
+  const { currentUser, currentId } = useContext(userContext);
+  return (
+    <div>
+      <Chat />
+    </div>
+  );
+};
 
-const Route=()=>{
-    const {username}=useContext(userContext)
-    return(
-        <h2>Hello mf ! {username} you are logged in...</h2>
-    )
-}
-
-export default Route
+export default Route;

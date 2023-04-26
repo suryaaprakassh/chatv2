@@ -4,7 +4,7 @@ import { userContext } from "./App";
 const Register = () => {
   const [username, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const { setCurrentUser } = useContext(userContext);
+  const { setCurrentUser, setCurrentId } = useContext(userContext);
   const [isOldUser, setOldUser] = useState(false);
   return (
     <div className="bg-blue-50 h-screen flex items-center mb-12" method="post">
@@ -12,11 +12,16 @@ const Register = () => {
         className="w-64 mx-auto"
         onSubmit={async (e) => {
           e.preventDefault();
-          const { data } = await axios.post("/register", {
+          const url = isOldUser ? "/login" : "/register";
+          const { data } = await axios.post(url, {
             username,
             password,
           });
+          if (isOldUser) {
+            setOldUser(!isOldUser);
+          }
           setCurrentUser(username);
+          setCurrentId(data._id);
         }}
       >
         <input
