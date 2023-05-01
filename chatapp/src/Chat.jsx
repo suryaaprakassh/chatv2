@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
+import { uniqBy } from "lodash";
 import Avatar from "./Avatar";
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -26,13 +27,10 @@ const Chat = () => {
     const incomingData = JSON.parse(e.data);
     if ("online" in incomingData) {
       showOnlinePeople(incomingData.online);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        { text: incomingData.text, byMe: false, id: incomingData.id },
-      ]);
+    } else if ("text" in incomingData) {
+      const dup = uniqBy([...messages, { ...incomingData, byMe: false }], "id");
+      setMessages([...dup]);
     }
-    console.log(messages);
   }
 
   function sendMessage(e) {
@@ -45,6 +43,10 @@ const Chat = () => {
         },
       })
     );
+    setMessages((prev) => [
+      ...prev,
+      { text: newMessage, byMe: true, recepient: selectedPerson },
+    ]);
   }
 
   return (
@@ -72,43 +74,53 @@ const Chat = () => {
       <div className="bg-blue-300 w-2/3 flex flex-col justify-between p-5">
         <div className="messages  w-full h-full flex flex-col">
           {messages.map((m) => {
-            return (
-              <div
-                key={uuid()}
-                className="bg-blue-500 text-white font-sans font-bold rounded-md p-5 m-4 "
-              >
-                {m.text}
-              </div>
-            );
+            if (m.byMe) {
+              return (
+                <div className="bg-green-600" key={uuid()}>
+                  {m.text}
+                </div>
+              );
+            } else {
+              return (
+                <div className="bg-yellow-600" key={uuid()}>
+                  {m.text}
+                </div>
+              );
+            }
           })}
         </div>
-        <form className="w-full flex align-center gap-2" onSubmit={sendMessage}>
-          <input
-            type="text"
-            placeholder="Type your message here "
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-            }}
-            className="bg-white rounded-sm p-2 border flex-grow"
-            value={newMessage}
-          />
-          <button className="bg-blue-500 p-2 rounded-md">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-              />
-            </svg>
-          </button>
-        </form>
+        {selectedPerson && (
+          <form
+            className="w-full flex align-center gap-2"
+            onSubmit={sendMessage}
+          >
+            <input
+              type="text"
+              placeholder="Type your message here "
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+              }}
+              className="bg-white rounded-sm p-2 border flex-grow"
+              value={newMessage}
+            />
+            <button className="bg-blue-500 p-2 rounded-md">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+                />
+              </svg>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

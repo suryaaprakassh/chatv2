@@ -139,22 +139,25 @@ wss.on("connection", (connection, req) => {
 
   connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString());
-
-    const messageDoc = await MessageModel.create({
-      sender: connection.userId,
-      recepient: messageData.message.recepient,
-      text: messageData.message.text,
-    });
-
-    [...wss.clients]
-      .filter((p) => p.userId == messageData.message.recepient)
-      .forEach((lavada) => {
-        lavada.send(
-          JSON.stringify({
-            text: messageData.message.text,
-            id: messageDoc._id,
-          })
-        );
+    if (messageData.message.recepient && messageData.message.text) {
+      const messageDoc = await MessageModel.create({
+        sender: connection.userId,
+        recepient: messageData.message.recepient,
+        text: messageData.message.text,
       });
+
+      [...wss.clients]
+        .filter((p) => p.userId == messageData.message.recepient)
+        .forEach((lavada) => {
+          lavada.send(
+            JSON.stringify({
+              text: messageData.message.text,
+              sender: connection.userId,
+              recepient: messageData.message.recepient,
+              id: messageDoc._id,
+            })
+          );
+        });
+    }
   });
 });
