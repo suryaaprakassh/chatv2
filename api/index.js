@@ -18,6 +18,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const User = require("./models/User");
+const MessageModel = require("./models/MessageModel");
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 
@@ -134,5 +135,26 @@ wss.on("connection", (connection, req) => {
         })),
       })
     );
+  });
+
+  connection.on("message", async (message) => {
+    const messageData = JSON.parse(message.toString());
+
+    const messageDoc = await MessageModel.create({
+      sender: connection.userId,
+      recepient: messageData.message.recepient,
+      text: messageData.message.text,
+    });
+
+    [...wss.clients]
+      .filter((p) => p.userId == messageData.message.recepient)
+      .forEach((lavada) => {
+        lavada.send(
+          JSON.stringify({
+            text: messageData.message.text,
+            id: messageDoc._id,
+          })
+        );
+      });
   });
 });

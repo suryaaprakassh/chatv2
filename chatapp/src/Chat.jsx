@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
+import Avatar from "./Avatar";
 const Chat = () => {
   const [ws, setWs] = useState(null);
   const [currentOnline, setCurrentOnline] = useState({});
+  const [selectedPerson, setSelected] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:5000");
     setWs(ws);
@@ -18,30 +23,74 @@ const Chat = () => {
   }
 
   function handleMessage(e) {
-    const onlineUsers = JSON.parse(e.data);
-    if ("online" in onlineUsers) {
-      showOnlinePeople(onlineUsers.online);
+    const incomingData = JSON.parse(e.data);
+    if ("online" in incomingData) {
+      showOnlinePeople(incomingData.online);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { text: incomingData.text, byMe: false, id: incomingData.id },
+      ]);
     }
+    console.log(messages);
   }
+
+  function sendMessage(e) {
+    e.preventDefault();
+    ws.send(
+      JSON.stringify({
+        message: {
+          recepient: selectedPerson,
+          text: newMessage,
+        },
+      })
+    );
+  }
+
   return (
     <div className="flex h-screen">
       <div className="bg-blue-100 w-1/3">
-        <div className="text-blue-600 font-bold text-3xl py-3">Chatter</div>
+        <div className="text-blue-400 font-bold text-3xl py-3">Chatter</div>
         {Object.keys(currentOnline).map((person) => {
           return (
-            <div key={uuid()} className="py-2 border-b border-gray-100 ">
-              {currentOnline[person]}
+            <div
+              key={uuid()}
+              className={
+                "py-2 border-b border-gray-100 flex gap-2  items-center text-xl cursor-pointer " +
+                (person == selectedPerson ? " bg-red-500 " : " ")
+              }
+              onClick={() => {
+                setSelected(person);
+              }}
+            >
+              <Avatar />
+              <span>{currentOnline[person]}</span>
             </div>
           );
         })}
       </div>
       <div className="bg-blue-300 w-2/3 flex flex-col justify-between p-5">
-        <div>messages</div>
-        <div className="w-full flex align-center gap-2">
+        <div className="messages  w-full h-full flex flex-col">
+          {messages.map((m) => {
+            return (
+              <div
+                key={uuid()}
+                className="bg-blue-500 text-white font-sans font-bold rounded-md p-5 m-4 "
+              >
+                {m.text}
+              </div>
+            );
+          })}
+        </div>
+        <form className="w-full flex align-center gap-2" onSubmit={sendMessage}>
           <input
             type="text"
             placeholder="Type your message here "
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+            }}
             className="bg-white rounded-sm p-2 border flex-grow"
+            value={newMessage}
           />
           <button className="bg-blue-500 p-2 rounded-md">
             <svg
@@ -59,7 +108,7 @@ const Chat = () => {
               />
             </svg>
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
