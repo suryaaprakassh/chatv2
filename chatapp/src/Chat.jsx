@@ -56,19 +56,21 @@ const Chat = () => {
       },
     ]);
     setNewMessage("");
+    const scroller = scrollDiv.current;
+    scroller.scrollIntoView();
   }
 
   return (
-    <div className="flex h-screen">
-      <div className="bg-blue-100 w-1/3">
-        <div className="text-blue-400 font-bold text-3xl py-3">Chatter</div>
+    <div className="flex h-screen font-roboto">
+      <div className="bg-[#D8DEEC ] w-1/6 border-gray-300 border-2 border-solid">
+        <div className="font-bold text-3xl py-3 px-2">Messages</div>
         {Object.keys(currentOnline).map((person) => {
           return (
             <div
               key={uuid()}
               className={
-                "py-2 border-b border-gray-100 flex gap-2  items-center text-xl cursor-pointer " +
-                (person == selectedPerson ? " bg-red-500 " : " ")
+                "py-2 border-b border-gray-100 flex gap-2  items-center text-xl cursor-pointer  m-2 rounded-md p-2" +
+                (person == selectedPerson ? " bg-gray-300 " : " ")
               }
               onClick={() => {
                 setSelected(person);
@@ -81,9 +83,9 @@ const Chat = () => {
           );
         })}
       </div>
-      <div className="bg-blue-300 w-2/3 flex flex-col justify-between p-5">
+      <div className="bg-gray-200 w-5/6 flex flex-col justify-between p-5 h-screen">
         {selectedPerson && (
-          <div className="messages  w-full h-full flex flex-col">
+          <div className="messages  w-full h-full flex flex-col overflow-scroll overflow-x-hidden text-lg tracking-wide">
             {uniqBy(messages, "id")
               .filter(
                 (k) =>
@@ -95,7 +97,7 @@ const Chat = () => {
                 if (m.byMe) {
                   return (
                     <div
-                      className="bg-green-300 p-5 m-4 rounded-md place-self-start"
+                      className="bg-[#1982fc] p-5 m-4 rounded-s-3xl rounded-tr-3xl  rounded-br-md place-self-end text-white font-bold"
                       key={uuid()}
                     >
                       {m.text}
@@ -104,7 +106,7 @@ const Chat = () => {
                 } else {
                   return (
                     <div
-                      className="bg-cyan-600 p-5 m-4 rounded-md place-self-end"
+                      className="bg-[#43CC47] p-5 m-4 rounded-r-3xl rounded-tl-3xl roundex-bl-md place-self-start font-bold text-white"
                       key={uuid()}
                     >
                       {m.text}
@@ -114,9 +116,14 @@ const Chat = () => {
               })}
           </div>
         )}
+        {!selectedPerson && (
+          <div className="text-2xl text-gray-700 text-center m-10">
+            ← Please Select a person to see messages
+          </div>
+        )}
         {selectedPerson && (
           <form
-            className="w-full flex align-center gap-2"
+            className="w-full flex align-center gap-2 "
             onSubmit={sendMessage}
           >
             <input
@@ -125,7 +132,7 @@ const Chat = () => {
               onChange={(e) => {
                 setNewMessage(e.target.value);
               }}
-              className="bg-white rounded-sm p-2 border flex-grow"
+              className="bg-white rounded-lg p-3 border-solid border-2 border-gray-300 flex-grow"
               value={newMessage}
             />
             <button className="bg-blue-500 p-2 rounded-md">
