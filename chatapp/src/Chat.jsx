@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { v4 as uuid } from "uuid";
 import { uniqBy } from "lodash";
 import Avatar from "./Avatar";
+import { userContext } from "./App";
 const Chat = () => {
   const [ws, setWs] = useState(null);
   const [currentOnline, setCurrentOnline] = useState({});
   const [selectedPerson, setSelected] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
-
+  const { currentId } = useContext(userContext);
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:5000");
     setWs(ws);
@@ -46,8 +47,15 @@ const Chat = () => {
     );
     setMessages((prev) => [
       ...prev,
-      { text: newMessage, byMe: true, recepient: selectedPerson, id: uuid() },
+      {
+        text: newMessage,
+        byMe: true,
+        sender: currentId,
+        recepient: selectedPerson,
+        id: uuid(),
+      },
     ]);
+    setNewMessage("");
   }
 
   return (
@@ -64,6 +72,7 @@ const Chat = () => {
               }
               onClick={() => {
                 setSelected(person);
+                setMessages((prev) => [...prev]);
               }}
             >
               <Avatar />
@@ -73,29 +82,38 @@ const Chat = () => {
         })}
       </div>
       <div className="bg-blue-300 w-2/3 flex flex-col justify-between p-5">
-        <div className="messages  w-full h-full flex flex-col">
-          {uniqBy(messages, "id").map((m) => {
-            if (m.byMe) {
-              return (
-                <div
-                  className="bg-green-300 p-5 m-4 rounded-md place-self-start"
-                  key={uuid()}
-                >
-                  {m.text}
-                </div>
-              );
-            } else {
-              return (
-                <div
-                  className="bg-cyan-600 p-5 m-4 rounded-md place-self-end"
-                  key={uuid()}
-                >
-                  {m.text}
-                </div>
-              );
-            }
-          })}
-        </div>
+        {selectedPerson && (
+          <div className="messages  w-full h-full flex flex-col">
+            {uniqBy(messages, "id")
+              .filter(
+                (k) =>
+                  (k.sender == selectedPerson && k.recepient == currentId) ||
+                  (k.recepient == selectedPerson && k.sender == currentId)
+              )
+
+              .map((m) => {
+                if (m.byMe) {
+                  return (
+                    <div
+                      className="bg-green-300 p-5 m-4 rounded-md place-self-start"
+                      key={uuid()}
+                    >
+                      {m.text}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div
+                      className="bg-cyan-600 p-5 m-4 rounded-md place-self-end"
+                      key={uuid()}
+                    >
+                      {m.text}
+                    </div>
+                  );
+                }
+              })}
+          </div>
+        )}
         {selectedPerson && (
           <form
             className="w-full flex align-center gap-2"
