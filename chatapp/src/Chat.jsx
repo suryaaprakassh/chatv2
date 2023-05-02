@@ -28,8 +28,9 @@ const Chat = () => {
     if ("online" in incomingData) {
       showOnlinePeople(incomingData.online);
     } else if ("text" in incomingData) {
-      const dup = uniqBy([...messages, { ...incomingData, byMe: false }], "id");
-      setMessages([...dup]);
+      // const dup = uniqBy([...messages, { ...incomingData, byMe: false }], "id");
+      // setMessages([...dup]);
+      setMessages((prev) => [...prev, { ...incomingData, byMe: false }]);
     }
   }
 
@@ -45,7 +46,7 @@ const Chat = () => {
     );
     setMessages((prev) => [
       ...prev,
-      { text: newMessage, byMe: true, recepient: selectedPerson },
+      { text: newMessage, byMe: true, recepient: selectedPerson, id: uuid() },
     ]);
   }
 
@@ -73,16 +74,22 @@ const Chat = () => {
       </div>
       <div className="bg-blue-300 w-2/3 flex flex-col justify-between p-5">
         <div className="messages  w-full h-full flex flex-col">
-          {messages.map((m) => {
+          {uniqBy(messages, "id").map((m) => {
             if (m.byMe) {
               return (
-                <div className="bg-green-600" key={uuid()}>
+                <div
+                  className="bg-green-300 p-5 m-4 rounded-md place-self-start"
+                  key={uuid()}
+                >
                   {m.text}
                 </div>
               );
             } else {
               return (
-                <div className="bg-yellow-600" key={uuid()}>
+                <div
+                  className="bg-cyan-600 p-5 m-4 rounded-md place-self-end"
+                  key={uuid()}
+                >
                   {m.text}
                 </div>
               );
